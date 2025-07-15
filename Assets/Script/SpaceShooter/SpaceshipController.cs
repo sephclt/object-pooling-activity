@@ -9,10 +9,10 @@ public class SpaceshipController : MonoBehaviour
 
     public float Speed;
     public float BulletSpeed;
-    public GameObject bulletPrefab;
+    public GameObject PlayerBulletPool;
     public Transform BulletSpawnHere;
     public GameObject GameClearScreen;
-    public TextMeshProUGUI textValue,hpValue;
+    public TextMeshProUGUI textValue, hpValue;
     public int score;
     public int hitponts;
     bool isGameClear = false;
@@ -33,7 +33,7 @@ public class SpaceshipController : MonoBehaviour
         hpValue.text = hitponts.ToString();
         if (Input.GetKeyDown(KeyCode.Space) && canShoot)
         {
-            SpawnBullet(); 
+            SpawnBullet();
         }
 
         if (hitponts <= 0)
@@ -64,11 +64,19 @@ public class SpaceshipController : MonoBehaviour
 
     public void SpawnBullet()
     {
-        //Instantiate to clone a game object
-        GameObject bullet = Instantiate(bulletPrefab, BulletSpawnHere.position, Quaternion.identity);
-        Rigidbody2D bulletRb = bullet.GetComponent<Rigidbody2D>();
-        bulletRb.linearVelocity = new Vector2(0f, BulletSpeed);
-
+        GameObject bulletObj = BulletPoolManager.Instance.GetPlayerBullet();
+        if (bulletObj != null)
+        {
+            bulletObj.transform.position = BulletSpawnHere.position;
+            bulletObj.transform.rotation = Quaternion.identity;
+            bulletObj.SetActive(true);
+            Rigidbody2D bulletRb = bulletObj.GetComponent<Rigidbody2D>();
+            bulletRb.linearVelocity = new Vector2(0f, BulletSpeed);
+        }
+        else
+        {
+            Debug.LogWarning("Bullet pool is empty, cannot spawn bullet.");
+        }
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -76,7 +84,7 @@ public class SpaceshipController : MonoBehaviour
         if (collision.CompareTag("EnemyBullet"))
         {
             hitponts--;
-            Destroy(collision.gameObject);
+            BulletPoolManager.Instance.ReturnEnemyBullet(collision.gameObject);
         }
     }
 

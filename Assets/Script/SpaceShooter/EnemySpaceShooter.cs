@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -10,7 +9,8 @@ public class EnemySpaceShooter : MonoBehaviour
     private float FireRate;
     private float storedFireRate;
     public float BulletSpeed;
-    public GameObject BulletPrefab;
+    public static int ActiveObjects { get; private set; }
+    public GameObject EnemyBulletPool;
 
     public float moveSpeed;
     public float moveInterval;
@@ -24,9 +24,9 @@ public class EnemySpaceShooter : MonoBehaviour
         //maxFR = 5
         FireRate = Random.Range(minFR, MaxFR);
         storedFireRate = FireRate;
+
         //InvokeRepeating
-        InvokeRepeating("MoveEnemy",5, moveInterval);
-        
+        InvokeRepeating("MoveEnemy", 5, moveInterval);
     }
 
 
@@ -41,33 +41,45 @@ public class EnemySpaceShooter : MonoBehaviour
         }
         if (health <= 0)
         {
-            //Destroy(gameObject);
-            //gameObject.SetActive(false);
+            Destroy(gameObject);
+            gameObject.SetActive(false);
         }
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
+
         if (collision.CompareTag("Bullet"))
         {
             health--;
+            BulletPoolManager.Instance.ReturnPlayerBullet(collision.gameObject);
             if (health <= 0)
             {
                 SpaceShip.score++;
                 gameObject.SetActive(false);
             }
-            Destroy(collision.gameObject);
         }
     }
 
     public void SpawnBullet()
     {
-        //Instantiate to clone a game object
-        GameObject bullet = Instantiate(BulletPrefab,transform.position, Quaternion.identity);
-        Rigidbody2D bulletRb = bullet.GetComponent<Rigidbody2D>();
-        bulletRb.linearVelocity = new Vector2(0f, -BulletSpeed);
+        // Get a bullet from the pool
+        GameObject bullet = BulletPoolManager.Instance.GetEnemyBullet();
+        if (bullet != null)
+        {
+            bullet.transform.position = transform.position;
+            bullet.transform.rotation = Quaternion.identity;
+            bullet.SetActive(true);
+            Rigidbody2D bulletRb = bullet.GetComponent<Rigidbody2D>();
+            bulletRb.linearVelocity = new Vector2(0f, -BulletSpeed);
+            ActiveObjects++;
+        }
+        else
+        {
+            Debug.LogWarning("Bullet pool is empty, cannot spawn bullet.");
+        }
     }
-    
+
     public void MoveEnemy()
     {
         //Moves the enemy downwards aloth the y axis.
