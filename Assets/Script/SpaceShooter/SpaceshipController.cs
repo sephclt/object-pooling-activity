@@ -67,7 +67,7 @@ public class SpaceshipController : MonoBehaviour
         GameObject bulletObj = BulletPoolManager.Instance.GetPlayerBullet();
         if (bulletObj != null)
         {
-            bulletObj.transform.position = BulletSpawnHere.position;
+            bulletObj.transform.position = transform.position;
             bulletObj.transform.rotation = Quaternion.identity;
             bulletObj.SetActive(true);
             Rigidbody2D bulletRb = bulletObj.GetComponent<Rigidbody2D>();
